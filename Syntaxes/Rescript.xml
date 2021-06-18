@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<syntax name="rescript">
+	<meta>
+		<name>ReScriptomatic</name>
+		<type>script</type>
+		<preferred-file-extension>res</preferred-file-extension>
+	</meta>
+	
+	<detectors>
+		<extension priority="1.0">res,resi</extension>
+	</detectors>
+	
+	<indentation>
+		<increase>
+			<expression>(?x)
+				(\{[^}\"']*$)|(\[[^\]\"']*$)|(\([^)\"']*$)
+				|(&lt;(?!\?|(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\b)([-_\.A-Za-z0-9]+)(?=\s|&gt;)\b[^&gt;]*&gt;[^&lt;]*$)
+				|(&lt;!--\s*$)
+			</expression>
+		</increase>
+		<decrease>
+			<expression>^\s*(\s*/\*.*\*/\s*)*[\}\]\)\\]</expression>
+		</decrease>
+	</indentation>
+	
+	<comments>
+		<multiline>
+			<starts-with>
+				<expression>{/*</expression>
+			</starts-with>
+			<ends-with>
+				<expression>*/}</expression>
+			</ends-with>
+		</multiline>
+	</comments>
+	
+	<brackets>
+		<pair open="{" close="}" />
+		<pair open="[" close="]" />
+		<pair open="(" close=")" />
+	</brackets>
+	
+	<surrounding-pairs>
+		<pair open="{" close="}" />
+		<pair open="[" close="]" />
+		<pair open="(" close=")" />
+		<pair open="&apos;" close="&apos;" />
+		<pair open="&quot;" close="&quot;" />
+		<pair open="`" close="`" />
+		<pair open="“" close="”" />
+		<pair open="‘" close="’" />
+	</surrounding-pairs>
+	
+	<completions>
+		<!-- "foo" -->
+		<provider>
+			<selector>*:not(string,comment), *:not(string,comment)</selector>
+			<expression>(?&lt;!\.)\b[a-zA-Z_][a-zA-Z0-9_]*</expression>
+			
+			<symbols type="function" syntax="javascript">
+				<behavior>
+					<arguments prefix="(" suffix=")" separator=", " />
+				</behavior>
+			</symbols>
+			<symbols type="class" syntax="javascript" />
+			<symbols type="variable,constant,argument" syntax="javascript" />
+		</provider>
+		
+		<!-- ".foo" -->
+		<provider>
+			<selector>*:not(string,comment), *:not(string,comment)</selector>
+			<expression>(?&lt;=\.)\b[a-zA-Z_][a-zA-Z0-9_]*</expression>
+			
+			<symbols type="function" syntax="javascript">
+				<behavior>
+					<arguments prefix="(" suffix=")" separator=", " />
+				</behavior>
+			</symbols>
+			<symbols type="property" syntax="javascript" />
+		</provider>
+	</completions>
+	
+	<scopes>
+		<include syntax="javascript" collection="*" />
+	</scopes>
+	
+	<collections>
+		<!-- Syntax -->
+		<collection name="syntax" override="true">
+			<include syntax="self" collection="tags" />
+			<include syntax="javascript" collection="syntax" />
+		</collection>
+		
+		<!-- Tags -->
+		<collection name="tags">
+			<scope name="rescript.tag-block">
+				<!-- Tag Blocks (<> … </>) -->
+				<starts-with>
+					<expression>&lt;&gt;</expression>
+					<capture number="0" name="rescript.tag.framework.open" />
+				</starts-with>
+				<ends-with>
+					<expression>&lt;/&gt;</expression>
+					<capture number="0" name="rescript.tag.framework.close" />
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="tags" />
+				</subscopes>
+			</scope>
+			
+			<scope name="rescript.tag.open.void">
+				<!-- Void elements (self-closing tags) -->
+				<symbol type="tag">
+					<context behavior="subtree" group-by-name="true" unclosed="truncate" />
+				</symbol>
+				<starts-with>
+					<strings prefix="&lt;" suffix="\b" word-boundary="false">
+						<string>area</string>
+						<string>base</string>
+						<string>br</string>
+						<string>col</string>
+						<string>command</string>
+						<string>embed</string>
+						<string>hr</string>
+						<string>input</string>
+						<string>img</string>
+						<string>keygen</string>
+						<string>link</string>
+						<string>meta</string>
+						<string>param</string>
+						<string>source</string>
+						<string>track</string>
+						<string>wbr</string>
+					</strings>
+					<capture number="1" name="rescript.tag.name" />
+				</starts-with>
+				<ends-with>
+					<expression>/?&gt;</expression>
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="attributes" />
+				</subscopes>
+			</scope>
+			
+			<scope name="rescript.tag-definition.component">
+				<!-- <ReactComponent>...</ReactComponent> -->
+				<symbol type="tag">
+					<display-name>
+						<component variable="name" />
+						<component selector="tag.attribute.value.id" prepend="#" />
+						<component selector="tag.attribute.value.class" prepend="." replace="\s+" replace-with="." />
+					</display-name>
+					<context behavior="subtree">
+						<auto-close string="&lt;/" completion="${name}&gt;" />
+					</context>
+				</symbol>
+				<starts-with>
+					<expression>(&lt;)\s*((?:(?:[a-zA-Z_][a-zA-Z0-9_-]*)(?:\.[a-zA-Z_][a-zA-Z0-9-_]*))|(?:[A-Z][a-zA-Z0-9_-]*))</expression>
+					<capture number="1" name="rescript.tag.open.framework" />
+					<capture number="2" name="rescript.tag.open.name.framework" />
+				</starts-with>
+				<ends-with>
+					<template>&lt;/\s*$2\s*&gt;|/&gt;</template>
+					<capture number="0" name="rescript.tag.close.framework" />
+				</ends-with>
+				<subscopes anchored="true">
+					<include syntax="self" collection="attributes" optional="true" repeat="true" />
+					
+					<cut-off>
+						<expression>/&gt;</expression>
+						<capture number="0" name="rescript.tag.close.framework" />
+					</cut-off>
+					
+					<scope name="rescript.tag.open.framework">
+						<expression>&gt;</expression>
+					</scope>
+					
+					<include syntax="self" collection="tag-content" optional="true" repeat="true" />
+				</subscopes>
+			</scope>
+			
+			<scope name="rescript.tag-definition.dom">
+				<!-- <domelement> -->
+				<symbol type="tag">
+					<display-name>
+						<component variable="name" />
+						<component selector="tag.attribute.value.id" prepend="#" />
+						<component selector="tag.attribute.value.class" prepend="." replace="\s+" replace-with="." />
+					</display-name>
+					<context behavior="subtree">
+						<auto-close string="&lt;/" completion="${name}&gt;" />
+					</context>
+				</symbol>
+				<starts-with>
+					<expression>(&lt;)([a-zA-Z_][a-zA-Z0-9_:.-]*)</expression>
+					<capture number="1" name="rescript.tag.open" />
+					<capture number="2" name="rescript.tag.open.name" />
+				</starts-with>
+				<ends-with>
+					<template>&lt;/\s*$2\s*&gt;|/&gt;</template>
+					<capture number="0" name="rescript.tag.close" />
+				</ends-with>
+				<subscopes anchored="true">
+					<include syntax="self" collection="attributes" optional="true" repeat="true" />
+					
+					<cut-off>
+						<expression>/&gt;</expression>
+						<capture number="0" name="rescript.tag.close.framework" />
+					</cut-off>
+					
+					<scope name="rescript.tag.open">
+						<expression>&gt;</expression>
+					</scope>
+					
+					<include syntax="self" collection="tag-content" optional="true" repeat="true" />
+				</subscopes>
+			</scope>
+		</collection>
+		
+		<!-- Tag Attributes -->
+		<collection name="attributes">
+			<include syntax="javascript" collection="comments" />
+			
+			<include syntax="self" collection="variables" />
+			
+			<scope name="rescript.tag-attribute-definition">
+				<starts-with>
+					<expression>\b([a-zA-Z_][a-zA-Z0-9-_]*)\b</expression>
+					<capture number="1" name="rescript.tag.attribute.name" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<scope name="rescript.tag.attribute.equals-sign">
+						<expression>=</expression>
+					</scope>
+					<include syntax="self" collection="attribute-values" />
+				</subscopes>
+			</scope>
+			
+			<include syntax="self" collection="attribute-values" />
+		</collection>
+		
+		<!-- Tag Content -->
+		<collection name="tag-content">
+			<include syntax="javascript" collection="comments" />
+			
+			<include syntax="self" collection="variables" />
+			
+			<include syntax="self" collection="tags" />
+			
+			<scope name="rescript.tag-content.bare-words">
+				<expression>(?:[^&lt;{\s]+)</expression>
+			</scope>
+			
+			<scope name="rescript.tag.close.framework">
+				<!-- </ReactComponent> -->
+				<expression>&lt;/\s*((?:(?:[a-zA-Z_][a-zA-Z0-9_-]*)(?:\.[a-zA-Z_][a-zA-Z0-9-_]*))|(?:[A-Z][a-zA-Z0-9_-]*))\s*&gt;</expression>
+				<capture number="1" name="rescript.tag.name.framework" />
+			</scope>
+			
+			<scope name="rescript.tag.close">
+				<!-- </domelement> -->
+				<expression>&lt;/\s*([a-zA-Z_][a-zA-Z0-9_:-]*)\s*&gt;</expression>
+				<capture number="1" name="rescript.tag.name" />
+			</scope>
+		</collection>
+		
+		<!-- Variables -->
+		<collection name="variables">
+			<scope name="rescript.value.variable">
+				<symbol type="block">
+					<context behavior="subtree" />
+				</symbol>
+				<starts-with>
+					<expression>\{</expression>
+					<capture number="0" name="rescript.value.variable.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\}</expression>
+					<capture number="0" name="rescript.value.variable.bracket" />
+				</ends-with>
+				<subscopes>
+					<cut-off>
+						<!-- Cut off if a JavaScript expression keyword is encountered -->
+						<expression>(?=\b(?:var|function|class|if|else|for|while)\b)</expression>
+					</cut-off>
+					<include syntax="rescript" collection="tags" />
+					<include syntax="javascript" collection="keywords" />
+					<include syntax="javascript" collection="blocks" />
+					<include syntax="javascript" collection="values" />
+					<include syntax="javascript" collection="identifiers" />
+					<include syntax="javascript" collection="syntax" />
+				</subscopes>
+			</scope>
+		</collection>
+		
+		<!-- Attribute values -->
+		<collection name="attribute-values">
+			<scope name="rescript.tag.attribute.value.double-quoted">
+				<starts-with>
+					<expression>&quot;</expression>
+				</starts-with>
+				<ends-with>
+					<expression>&quot;</expression>
+				</ends-with>
+				<subscopes>
+					<scope name="rescript.tag.attribute.value.escape">
+						<expression>\\\\|\\\\{|\\&quot;</expression>
+					</scope>
+					<include syntax="self" collection="variables" />
+				</subscopes>
+			</scope>
+			
+			<scope name="rescript.tag.attribute.value.single-quoted">
+				<starts-with>
+					<expression>&apos;</expression>
+				</starts-with>
+				<ends-with>
+					<expression>&apos;</expression>
+				</ends-with>
+				<subscopes>
+					<scope name="rescript.tag.attribute.value.escape">
+						<expression>\\\\|\\\\{|\\&apos;</expression>
+					</scope>
+					<include syntax="self" collection="variables" />
+				</subscopes>
+			</scope>
+			
+			<include syntax="self" collection="variables" />
+			
+			<scope name="rescript.tag.attribute.value.bare">
+				<expression>\b[a-zA-Z0-9-_]+\b</expression>
+			</scope>
+		</collection>
+	</collections>
+</syntax>

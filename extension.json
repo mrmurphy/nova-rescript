@@ -1,0 +1,15 @@
+{
+  "identifier": "mrmurphy.rescript",
+  "name": "rescript",
+  "organization": "MrMurphy",
+  "description": "Lorem ipsum, dolor sit amet.",
+  "version": "1.0",
+  "categories": ["languages"],
+  "main": "main.js",
+  "entitlements": {
+    "process": true,
+    "filesystem": "readwrite",
+    "clipboard": true
+  },
+  "config": []
+}
