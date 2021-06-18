@@ -1,45 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <syntax name="rescript">
 	<meta>
-		<name>ReScriptomatic</name>
-		<type>script</type>
-		<preferred-file-extension>res</preferred-file-extension>
+	<name>ReScriptomattic</name>
+	<type>script</type>
+	<preferred-file-extension>res</preferred-file-extension>
 	</meta>
-	
+
 	<detectors>
 		<extension priority="1.0">res,resi</extension>
 	</detectors>
-	
+
 	<indentation>
 		<increase>
-			<expression>(?x)
-				(\{[^}\"']*$)|(\[[^\]\"']*$)|(\([^)\"']*$)
-				|(&lt;(?!\?|(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\b)([-_\.A-Za-z0-9]+)(?=\s|&gt;)\b[^&gt;]*&gt;[^&lt;]*$)
-				|(&lt;!--\s*$)
-			</expression>
+			<expression>(\{[^}\"']*$)|(\[[^\]\"']*$)|(\([^)\"']*$)</expression>
 		</increase>
 		<decrease>
 			<expression>^\s*(\s*/\*.*\*/\s*)*[\}\]\)\\]</expression>
 		</decrease>
 	</indentation>
-	
+
+
 	<comments>
 		<multiline>
 			<starts-with>
-				<expression>{/*</expression>
+				<expression>/*</expression>
 			</starts-with>
 			<ends-with>
-				<expression>*/}</expression>
+				<expression>*/</expression>
 			</ends-with>
 		</multiline>
+		<single>
+			<expression>//</expression>
+		</single>
 	</comments>
-	
+
 	<brackets>
 		<pair open="{" close="}" />
 		<pair open="[" close="]" />
 		<pair open="(" close=")" />
 	</brackets>
-	
+
+
+
 	<surrounding-pairs>
 		<pair open="{" close="}" />
 		<pair open="[" close="]" />
@@ -50,287 +52,1033 @@
 		<pair open="“" close="”" />
 		<pair open="‘" close="’" />
 	</surrounding-pairs>
-	
-	<completions>
-		<!-- "foo" -->
-		<provider>
-			<selector>*:not(string,comment), *:not(string,comment)</selector>
-			<expression>(?&lt;!\.)\b[a-zA-Z_][a-zA-Z0-9_]*</expression>
-			
-			<symbols type="function" syntax="javascript">
-				<behavior>
-					<arguments prefix="(" suffix=")" separator=", " />
-				</behavior>
-			</symbols>
-			<symbols type="class" syntax="javascript" />
-			<symbols type="variable,constant,argument" syntax="javascript" />
-		</provider>
-		
-		<!-- ".foo" -->
-		<provider>
-			<selector>*:not(string,comment), *:not(string,comment)</selector>
-			<expression>(?&lt;=\.)\b[a-zA-Z_][a-zA-Z0-9_]*</expression>
-			
-			<symbols type="function" syntax="javascript">
-				<behavior>
-					<arguments prefix="(" suffix=")" separator=", " />
-				</behavior>
-			</symbols>
-			<symbols type="property" syntax="javascript" />
-		</provider>
-	</completions>
-	
+
 	<scopes>
-		<include syntax="javascript" collection="*" />
-	</scopes>
+	<!-- Some overrides -->
+	<scope name="rescript.identifier.type.class">
+		<expression>\b[A-Z][^\. ]+\.</expression>
+	</scope>
 	
+		<!-- All the JS stuff, copied directly -->
+		<include syntax="self" collection="comments" />
+		<include syntax="self" collection="imports" />
+		<include syntax="self" collection="variables" />
+		<include syntax="self" collection="classes" />
+		<include syntax="self" collection="functions" />
+		<include syntax="self" collection="keywords" />
+		<include syntax="self" collection="values" />
+		<include syntax="self" collection="identifiers" />
+		<include syntax="self" collection="syntax" />
+	
+	</scopes>
+
 	<collections>
-		<!-- Syntax -->
-		<collection name="syntax" override="true">
-			<include syntax="self" collection="tags" />
-			<include syntax="javascript" collection="syntax" />
-		</collection>
-		
-		<!-- Tags -->
-		<collection name="tags">
-			<scope name="rescript.tag-block">
-				<!-- Tag Blocks (<> … </>) -->
+		<!-- Comments -->
+		<collection name="comments">
+			<scope name="rescript.comment.single.shebang">
+				<expression>^\#!(.*)$</expression>
+				<capture number="1" name="rescript.comment.content" />
+			</scope>
+			<scope name="rescript.comment.single" spell-check="true">
+				<expression>\/\/(.*)$</expression>
+				<capture number="1" name="rescript.comment.content" />
+			</scope>
+			<scope name="rescript.comment.block" spell-check="true">
 				<starts-with>
-					<expression>&lt;&gt;</expression>
-					<capture number="0" name="rescript.tag.framework.open" />
+					<expression>\/\*</expression>
 				</starts-with>
 				<ends-with>
-					<expression>&lt;/&gt;</expression>
-					<capture number="0" name="rescript.tag.framework.close" />
+					<expression>\*\/</expression>
 				</ends-with>
-				<subscopes>
-					<include syntax="self" collection="tags" />
-				</subscopes>
-			</scope>
-			
-			<scope name="rescript.tag.open.void">
-				<!-- Void elements (self-closing tags) -->
-				<symbol type="tag">
-					<context behavior="subtree" group-by-name="true" unclosed="truncate" />
-				</symbol>
-				<starts-with>
-					<strings prefix="&lt;" suffix="\b" word-boundary="false">
-						<string>area</string>
-						<string>base</string>
-						<string>br</string>
-						<string>col</string>
-						<string>command</string>
-						<string>embed</string>
-						<string>hr</string>
-						<string>input</string>
-						<string>img</string>
-						<string>keygen</string>
-						<string>link</string>
-						<string>meta</string>
-						<string>param</string>
-						<string>source</string>
-						<string>track</string>
-						<string>wbr</string>
-					</strings>
-					<capture number="1" name="rescript.tag.name" />
-				</starts-with>
-				<ends-with>
-					<expression>/?&gt;</expression>
-				</ends-with>
-				<subscopes>
-					<include syntax="self" collection="attributes" />
-				</subscopes>
-			</scope>
-			
-			<scope name="rescript.tag-definition.component">
-				<!-- <ReactComponent>...</ReactComponent> -->
-				<symbol type="tag">
-					<display-name>
-						<component variable="name" />
-						<component selector="tag.attribute.value.id" prepend="#" />
-						<component selector="tag.attribute.value.class" prepend="." replace="\s+" replace-with="." />
-					</display-name>
-					<context behavior="subtree">
-						<auto-close string="&lt;/" completion="${name}&gt;" />
-					</context>
-				</symbol>
-				<starts-with>
-					<expression>(&lt;)\s*((?:(?:[a-zA-Z_][a-zA-Z0-9_-]*)(?:\.[a-zA-Z_][a-zA-Z0-9-_]*))|(?:[A-Z][a-zA-Z0-9_-]*))</expression>
-					<capture number="1" name="rescript.tag.open.framework" />
-					<capture number="2" name="rescript.tag.open.name.framework" />
-				</starts-with>
-				<ends-with>
-					<template>&lt;/\s*$2\s*&gt;|/&gt;</template>
-					<capture number="0" name="rescript.tag.close.framework" />
-				</ends-with>
-				<subscopes anchored="true">
-					<include syntax="self" collection="attributes" optional="true" repeat="true" />
-					
-					<cut-off>
-						<expression>/&gt;</expression>
-						<capture number="0" name="rescript.tag.close.framework" />
-					</cut-off>
-					
-					<scope name="rescript.tag.open.framework">
-						<expression>&gt;</expression>
-					</scope>
-					
-					<include syntax="self" collection="tag-content" optional="true" repeat="true" />
-				</subscopes>
-			</scope>
-			
-			<scope name="rescript.tag-definition.dom">
-				<!-- <domelement> -->
-				<symbol type="tag">
-					<display-name>
-						<component variable="name" />
-						<component selector="tag.attribute.value.id" prepend="#" />
-						<component selector="tag.attribute.value.class" prepend="." replace="\s+" replace-with="." />
-					</display-name>
-					<context behavior="subtree">
-						<auto-close string="&lt;/" completion="${name}&gt;" />
-					</context>
-				</symbol>
-				<starts-with>
-					<expression>(&lt;)([a-zA-Z_][a-zA-Z0-9_:.-]*)</expression>
-					<capture number="1" name="rescript.tag.open" />
-					<capture number="2" name="rescript.tag.open.name" />
-				</starts-with>
-				<ends-with>
-					<template>&lt;/\s*$2\s*&gt;|/&gt;</template>
-					<capture number="0" name="rescript.tag.close" />
-				</ends-with>
-				<subscopes anchored="true">
-					<include syntax="self" collection="attributes" optional="true" repeat="true" />
-					
-					<cut-off>
-						<expression>/&gt;</expression>
-						<capture number="0" name="rescript.tag.close.framework" />
-					</cut-off>
-					
-					<scope name="rescript.tag.open">
-						<expression>&gt;</expression>
-					</scope>
-					
-					<include syntax="self" collection="tag-content" optional="true" repeat="true" />
-				</subscopes>
 			</scope>
 		</collection>
-		
-		<!-- Tag Attributes -->
-		<collection name="attributes">
-			<include syntax="javascript" collection="comments" />
-			
-			<include syntax="self" collection="variables" />
-			
-			<scope name="rescript.tag-attribute-definition">
-				<starts-with>
-					<expression>\b([a-zA-Z_][a-zA-Z0-9-_]*)\b</expression>
-					<capture number="1" name="rescript.tag.attribute.name" />
-				</starts-with>
-				<ends-with />
-				<subscopes anchored="true">
-					<scope name="rescript.tag.attribute.equals-sign">
-						<expression>=</expression>
-					</scope>
-					<include syntax="self" collection="attribute-values" />
-				</subscopes>
-			</scope>
-			
-			<include syntax="self" collection="attribute-values" />
-		</collection>
-		
-		<!-- Tag Content -->
-		<collection name="tag-content">
-			<include syntax="javascript" collection="comments" />
-			
-			<include syntax="self" collection="variables" />
-			
-			<include syntax="self" collection="tags" />
-			
-			<scope name="rescript.tag-content.bare-words">
-				<expression>(?:[^&lt;{\s]+)</expression>
-			</scope>
-			
-			<scope name="rescript.tag.close.framework">
-				<!-- </ReactComponent> -->
-				<expression>&lt;/\s*((?:(?:[a-zA-Z_][a-zA-Z0-9_-]*)(?:\.[a-zA-Z_][a-zA-Z0-9-_]*))|(?:[A-Z][a-zA-Z0-9_-]*))\s*&gt;</expression>
-				<capture number="1" name="rescript.tag.name.framework" />
-			</scope>
-			
-			<scope name="rescript.tag.close">
-				<!-- </domelement> -->
-				<expression>&lt;/\s*([a-zA-Z_][a-zA-Z0-9_:-]*)\s*&gt;</expression>
-				<capture number="1" name="rescript.tag.name" />
-			</scope>
-		</collection>
-		
-		<!-- Variables -->
-		<collection name="variables">
-			<scope name="rescript.value.variable">
+
+		<!-- Blocks -->
+		<collection name="blocks">
+			<scope name="rescript.block">
 				<symbol type="block">
 					<context behavior="subtree" />
 				</symbol>
 				<starts-with>
 					<expression>\{</expression>
-					<capture number="0" name="rescript.value.variable.bracket" />
+					<capture number="0" name="rescript.block.bracket" />
 				</starts-with>
 				<ends-with>
 					<expression>\}</expression>
-					<capture number="0" name="rescript.value.variable.bracket" />
+					<capture number="0" name="rescript.block.bracket" />
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="key-expressions" />
+					<include syntax="self" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Imports -->
+		<collection name="imports">
+			<scope name="rescript.import">
+				<starts-with>
+					<expression>\b(import)\b</expression>
+					<capture number="1" name="rescript.keyword.import" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="import-references" optional="true" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="strings" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Import References -->
+		<collection name="import-references">
+			<scope name="rescript.destructure">
+				<starts-with>
+					<expression>\{</expression>
+					<capture number="0" name="rescript.destructure.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\}</expression>
+					<capture number="0" name="rescript.destructure.bracket" />
 				</ends-with>
 				<subscopes>
 					<cut-off>
-						<!-- Cut off if a JavaScript expression keyword is encountered -->
-						<expression>(?=\b(?:var|function|class|if|else|for|while)\b)</expression>
+						<expression>(?=\b(?:static|async|function|class|if|else|while|for)\b)</expression>
 					</cut-off>
-					<include syntax="rescript" collection="tags" />
-					<include syntax="javascript" collection="keywords" />
-					<include syntax="javascript" collection="blocks" />
-					<include syntax="javascript" collection="values" />
-					<include syntax="javascript" collection="identifiers" />
-					<include syntax="javascript" collection="syntax" />
+					<scope name="rescript.identifier">
+						<symbol type="variable" scope="external" />
+						<expression>(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+					</scope>
+					<scope name="rescript.comma">
+						<expression>,</expression>
+					</scope>
+				</subscopes>
+			</scope>
+			<scope name="rescript.identifier">
+				<expression>(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+			</scope>
+		</collection>
+
+		<!-- Key Expressions -->
+		<collection name="key-expressions">
+			<!-- Unquoted Keys -->
+			<scope name="rescript.key-expression.object">
+				<symbol type="property">
+					<context behavior="subtree" />
+				</symbol>
+				<starts-with>
+					<expression>((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(:)(?=\s*\{)</expression>
+					<capture number="1" name="rescript.identifier.key.name" />
+					<capture number="2" name="rescript.colon" />
+				</starts-with>
+				<ends-with>
+					<expression>,|(?=\})</expression>
+				</ends-with>
+				<subscopes anchored="true">
+					<include syntax="self" collection="blocks" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.key-expression.function">
+				<symbol type="method" />
+				<starts-with>
+					<expression>((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(:)(?=\s*function\b)</expression>
+					<capture number="1" name="rescript.identifier.key.name" />
+					<capture number="2" name="rescript.colon" />
+				</starts-with>
+				<ends-with>
+					<expression>,|(?=\})</expression>
+				</ends-with>
+				<subscopes anchored="true">
+					<scope name="rescript.function.keyword">
+						<expression>\bfunction\b</expression>
+					</scope>
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.key-expression">
+				<symbol type="property">
+					<context behavior="subtree" />
+				</symbol>
+				<expression>((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(:)</expression>
+				<capture number="1" name="rescript.key.name" />
+				<capture number="2" name="rescript.colon" />
+			</scope>
+
+			<!-- Quoted Keys -->
+			<scope name="rescript.key-expression.object">
+				<symbol type="property">
+					<context behavior="subtree" />
+				</symbol>
+				<starts-with>
+					<expression>((&quot;|&apos;)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(\2))\s*(:)(?=\s*\{)</expression>
+					<capture number="1" name="rescript.key.string" />
+					<capture number="2" name="rescript.key.string.delimiter" />
+					<capture number="3" name="rescript.key.name" />
+					<capture number="4" name="rescript.key.string.delimiter" />
+					<capture number="5" name="rescript.colon" />
+				</starts-with>
+				<ends-with>
+					<expression>,|(?=\})</expression>
+				</ends-with>
+				<subscopes anchored="true">
+					<include syntax="self" collection="blocks" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.key-expression.function.quoted">
+				<symbol type="method" />
+				<starts-with>
+					<expression>((&quot;|&apos;)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(\2))\s*(:)(?=\s*function\b)</expression>
+					<capture number="1" name="rescript.key.string" />
+					<capture number="2" name="rescript.key.string.delimiter" />
+					<capture number="3" name="rescript.key.name" />
+					<capture number="4" name="rescript.key.string.delimiter" />
+					<capture number="5" name="rescript.colon" />
+				</starts-with>
+				<ends-with>
+					<expression>,|(?=\})</expression>
+				</ends-with>
+				<subscopes anchored="true">
+					<scope name="rescript.function.keyword">
+						<expression>\bfunction\b</expression>
+					</scope>
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.key-expression">
+				<symbol type="property">
+					<context behavior="subtree" />
+				</symbol>
+				<expression>((&quot;|&apos;)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(\2))\s*(:)</expression>
+				<capture number="1" name="rescript.key.string" />
+				<capture number="2" name="rescript.key.string.delimiter" />
+				<capture number="3" name="rescript.key.name" />
+				<capture number="4" name="rescript.key.string.delimiter" />
+				<capture number="5" name="rescript.colon" />
+			</scope>
+		</collection>
+
+		<!-- Variables -->
+		<collection name="variables">
+			<!-- Named Function Variables -->
+			<scope name="rescript.definition.function.variable">
+				<symbol type="function">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>\b(let|var|const)\s+((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(=)\s*(function)(?=\s*\()</expression>
+					<capture number="1" name="rescript.keyword" />
+					<capture number="2" name="rescript.function.identifier.name" />
+					<capture number="3" name="rescript.operator.equals" />
+					<capture number="4" name="rescript.keyword" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.definition.function.variable">
+				<symbol type="function">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(=)\s*(function)(?=\s*\()</expression>
+					<capture number="1" name="rescript.function.identifier.name" />
+					<capture number="2" name="rescript.operator.equals" />
+					<capture number="3" name="rescript.keyword" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+
+			<!-- Arrow Function Variables -->
+			<scope name="rescript.definition.function.arrow.named.local">
+				<symbol type="function">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>\b(let|var|const)\s+((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(=)\s*(?=(?:
+						(?:\([A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ,*.={}\[\]\s\\]*\)) # (arg, arg) =>
+						|(?:(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*) # arg =>
+						)\s*=&gt;\s*)</expression>
+					<capture number="1" name="rescript.keyword" />
+					<capture number="2" name="rescript.identifier.function.name" />
+					<capture number="3" name="rescript.operator.equals" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arrow-function-arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<scope name="rescript.operator">
+						<expression>=&gt;</expression>
+					</scope>
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arrow-function-inline-expressions" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.definition.function.arrow.named.global">
+				<symbol type="function">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(=)\s*(?=(?:
+						(?:\([A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ,*.={}\[\]\s\\]*\)) # (arg, arg) =>
+						|(?:(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*) # arg =>
+						)\s*=&gt;\s*)</expression>
+					<capture number="1" name="rescript.identifier.function.name" />
+					<capture number="2" name="rescript.operator.equals" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arrow-function-arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<scope name="rescript.operator">
+						<expression>=&gt;</expression>
+					</scope>
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arrow-function-inline-expressions" />
+				</subscopes>
+			</scope>
+
+			<scope name="rescript.definition.property">
+				<symbol type="property" scope="private" />
+				<expression>(this)(\.)(\#?[a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(\=)</expression>
+				<capture number="1" name="rescript.keyword" />
+				<capture number="2" name="rescript.operator" />
+				<capture number="3" name="rescript.identifier.property.name" />
+				<capture number="4" name="rescript.operator" />
+			</scope>
+
+			<!-- Destructuring Assignment -->
+			<scope name="rescript.destructure-assignment">
+				<starts-with>
+					<expression>\b(let|var|const)\s+(\[)(?=[a-zA-ZA-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_,\s\.]+\]\s*\=)</expression>
+					<capture number="1" name="rescript.keyword" />
+					<capture number="2" name="rescript.destructure.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\]</expression>
+					<capture number="0" name="rescript.destructure.bracket" />
+				</ends-with>
+				<subscopes>
+					<cut-off>
+						<expression>(?=\b(?:static|async|function|class|if|else|while|for)\b)</expression>
+					</cut-off>
+					<scope name="rescript.identifier">
+						<symbol type="variable" scope="local" />
+						<expression>(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+					</scope>
+					<scope name="rescript.rest">
+						<symbol type="variable" scope="local" />
+						<expression>(\.\.\.)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)</expression>
+						<capture number="1" name="rescript.rest.operator" />
+						<capture number="2" name="rescript.rest.identifier.name" />
+					</scope>
+					<scope name="rescript.comma">
+						<expression>,</expression>
+					</scope>
+				</subscopes>
+			</scope>
+			<scope name="rescript.destructure-assignment">
+				<starts-with>
+					<expression>\[(?=[a-zA-ZA-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_,\s\.]+\]\s*\=)</expression>
+					<capture number="0" name="rescript.destructure.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\]</expression>
+					<capture number="0" name="rescript.destructure.bracket" />
+				</ends-with>
+				<subscopes>
+					<cut-off>
+						<expression>(?=\b(?:static|async|function|class|if|else|while|for)\b)</expression>
+					</cut-off>
+					<scope name="rescript.identifier">
+						<symbol type="variable" scope="local" />
+						<expression>(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+					</scope>
+					<scope name="rescript.rest">
+						<symbol type="variable" scope="local" />
+						<expression>(\.\.\.)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)</expression>
+						<capture number="1" name="rescript.rest.operator" />
+						<capture number="2" name="rescript.rest.identifier.name" />
+					</scope>
+					<scope name="rescript.comma">
+						<expression>,</expression>
+					</scope>
+				</subscopes>
+			</scope>
+
+			<scope name="rescript.definition.variable.local">
+				<symbol type="variable" scope="local" />
+				<expression>\b(let|var|const)\s+([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(\=)</expression>
+				<capture number="1" name="rescript.keyword" />
+				<capture number="2" name="rescript.identifier.name" />
+				<capture number="3" name="rescript.operator" />
+			</scope>
+
+			<scope name="rescript.definition.variable.global">
+				<symbol type="variable" scope="global" />
+				<expression>(?&lt;!\.)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\s*(\=(?!\=|&gt;))</expression>
+				<capture number="1" name="rescript.identifier.name" />
+				<capture number="2" name="rescript.operator" />
+			</scope>
+		</collection>
+
+		<!-- Classes -->
+		<collection name="classes">
+			<scope name="rescript.definition.class">
+				<symbol type="class">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>\b(class)\s+([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\b</expression>
+					<capture number="1" name="rescript.keyword.class" />
+					<capture number="2" name="rescript.identifier.type.class.name" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<scope name="rescript.class.extends" optional="true">
+						<expression>\b(extends)\s+([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_\.]*)</expression>
+						<capture number="1" name="rescript.keyword.extends" />
+						<capture number="2" name="rescript.identifier.type.class.superclass" />
+					</scope>
+					<scope name="rescript.block">
+						<symbol type="block">
+							<context behavior="subtree" fold-type="class" />
+						</symbol>
+						<starts-with>
+							<expression>\{</expression>
+							<capture number="0" name="rescript.bracket" />
+						</starts-with>
+						<ends-with>
+							<expression>\}</expression>
+							<capture number="0" name="rescript.bracket" />
+						</ends-with>
+						<subscopes>
+							<include syntax="self" collection="comments" />
+							<include syntax="self" collection="class-fields" />
+							<include syntax="self" collection="methods" />
+							<scope name="rescript.keyword">
+								<strings>
+									<string>static</string>
+									<string>async</string>
+									<string>get</string>
+									<string>set</string>
+								</strings>
+							</scope>
+						</subscopes>
+					</scope>
 				</subscopes>
 			</scope>
 		</collection>
-		
-		<!-- Attribute values -->
-		<collection name="attribute-values">
-			<scope name="rescript.tag.attribute.value.double-quoted">
+
+		<!-- Functions -->
+		<collection name="functions">
+			<scope name="rescript.definition.function.named">
+				<symbol type="function">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
 				<starts-with>
-					<expression>&quot;</expression>
+					<expression>(?:\b(async)\s+)?\b(function)\s+([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)</expression>
+					<capture number="1" name="rescript.keyword.async" />
+					<capture number="2" name="rescript.keyword" />
+					<capture number="3" name="rescript.identifier.function.name" />
 				</starts-with>
-				<ends-with>
-					<expression>&quot;</expression>
-				</ends-with>
-				<subscopes>
-					<scope name="rescript.tag.attribute.value.escape">
-						<expression>\\\\|\\\\{|\\&quot;</expression>
-					</scope>
-					<include syntax="self" collection="variables" />
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
 				</subscopes>
 			</scope>
-			
-			<scope name="rescript.tag.attribute.value.single-quoted">
+
+			<scope name="rescript.definition.function.anonymous">
+				<symbol type="function" anonymous="true">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
 				<starts-with>
-					<expression>&apos;</expression>
+					<expression>(?:\b(async)\s+)?\b(function)(?=\s*\()</expression>
+					<capture number="1" name="rescript.keyword" />
+					<capture number="2" name="rescript.keyword" />
 				</starts-with>
-				<ends-with>
-					<expression>&apos;</expression>
-				</ends-with>
-				<subscopes>
-					<scope name="rescript.tag.attribute.value.escape">
-						<expression>\\\\|\\\\{|\\&apos;</expression>
-					</scope>
-					<include syntax="self" collection="variables" />
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
 				</subscopes>
 			</scope>
-			
-			<include syntax="self" collection="variables" />
-			
-			<scope name="rescript.tag.attribute.value.bare">
-				<expression>\b[a-zA-Z0-9-_]+\b</expression>
+			<scope name="rescript.definition.function.arrow.anonymous">
+				<symbol type="function" anonymous="true">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>(?=(?:
+						(?:\([A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ,*.=${}\[\]\s\\]*\)) # (arg, arg) =>
+						|(?:(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*) # arg =>
+						)\s*=&gt;\s*)</expression>
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arrow-function-arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<scope name="rescript.operator">
+						<expression>=&gt;</expression>
+					</scope>
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arrow-function-inline-expressions" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Methods -->
+		<collection name="methods">
+			<scope name="rescript.method.constructor">
+				<symbol type="constructor">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>\b(constructor)\b</expression>
+					<capture number="1" name="rescript.keyword.name.constructor" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+
+			<scope name="rescript.method.getter">
+				<symbol type="getter">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>(?:\b(static)\s+)?\b(get)\s+([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\b</expression>
+					<capture number="1" name="rescript.keyword.static" />
+					<capture number="2" name="rescript.keyword.setter" />
+					<capture number="3" name="rescript.identifier.method.name" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+
+			<scope name="rescript.method.setter">
+				<symbol type="setter">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>(?:\b(static)\s+)?\b(set)\s+([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\b</expression>
+					<capture number="1" name="rescript.keyword.static" />
+					<capture number="2" name="rescript.keyword.setter" />
+					<capture number="3" name="rescript.identifier.method.name" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+
+			<scope name="rescript.method">
+				<symbol type="method">
+					<context behavior="subtree" foldable="false" />
+				</symbol>
+				<starts-with>
+					<expression>(?:\b(static)\s+)?(?:\b(async)\s+)?([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\b\s*(?=\()</expression>
+					<capture number="1" name="rescript.keyword.static" />
+					<capture number="2" name="rescript.keyword.async" />
+					<capture number="3" name="rescript.identifier.method.name" />
+				</starts-with>
+				<ends-with />
+				<subscopes anchored="true">
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="arguments" />
+					<include syntax="self" collection="comments" optional="true" repeat="true" />
+					<include syntax="self" collection="function-blocks" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Class Fields -->
+		<collection name="class-fields">
+			<scope name="rescript.class-variable-initializer">
+				<symbol type="property" scope="private" />
+				<starts-with>
+					<expression>(?:\b(static)\s+)(\#?[a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(?=\s*(?:\=|$))</expression>
+					<capture number="1" name="rescript.keyword.static" />
+					<capture number="2" name="rescript.identifier.name" />
+				</starts-with>
+				<ends-with>
+					<expression>(?=;|$)</expression>
+				</ends-with>
+				<subscopes>
+					<cut-off>
+						<expression>(?=\b(?:static|async|function|class|if|else|while|for)\b)</expression>
+					</cut-off>
+					<include syntax="self" collection="comments" />
+					<include syntax="self" collection="keywords" />
+					<include syntax="self" collection="values" />
+					<include syntax="self" collection="identifiers" />
+					<include syntax="self" collection="syntax" />
+				</subscopes>
+			</scope>
+
+			<scope name="rescript.variable-initializer">
+				<symbol type="property" scope="private" />
+				<starts-with>
+					<expression>(\#?[a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(?=\s*(?:\=|$))</expression>
+					<capture number="1" name="rescript.identifier.name" />
+				</starts-with>
+				<ends-with>
+					<expression>(?=;|$)</expression>
+				</ends-with>
+				<subscopes>
+					<cut-off>
+						<expression>(?=\b(?:static|async|function|class|if|else|while|for)\b)</expression>
+					</cut-off>
+					<include syntax="self" collection="comments" />
+					<include syntax="self" collection="keywords" />
+					<include syntax="self" collection="values" />
+					<include syntax="self" collection="identifiers" />
+					<include syntax="self" collection="syntax" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Arguments for Functions -->
+		<collection name="arguments">
+			<scope name="rescript.arguments">
+				<include syntax="self" collection="comments" />
+				<starts-with>
+					<expression>\(</expression>
+					<capture number="0" name="rescript.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\)</expression>
+					<capture number="0" name="rescript.bracket" />
+				</ends-with>
+				<subscopes>
+					<cut-off>
+						<expression>(?=\b(?:function|class|if|else|while|for)\b)</expression>
+					</cut-off>
+					<include syntax="self" collection="comments" />
+					<scope name="rescript.separator">
+						<expression>,</expression>
+					</scope>
+					<scope name="rescript.identifier.argument.rest">
+						<symbol type="argument" />
+						<expression>(\.\.\.)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\b</expression>
+						<capture number="1" name="rescript.operator" />
+						<capture number="2" name="rescript.identifier.argument.rest.name" />
+					</scope>
+					<scope name="rescript.identifier.argument.name">
+						<symbol type="argument" />
+						<expression>(?&lt;!\=)(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+					</scope>
+					<include syntax="self" collection="values" />
+					<include syntax="self" collection="syntax" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Arguments for Arrow Functions -->
+		<collection name="arrow-function-arguments">
+			<scope name="rescript.identifier.argument.name.single">
+				<symbol type="argument" />
+				<expression>(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*(?=\s*=&gt;)</expression>
+			</scope>
+			<include syntax="self" collection="arguments" />
+		</collection>
+
+		<!-- Expressions for Arrow Functions -->
+		<collection name="arrow-function-inline-expressions">
+			<scope name="rescript.arrow-function.inline-expression-group">
+				<starts-with>
+					<expression>\(</expression>
+					<capture number="0" name="rescript.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\)</expression>
+					<capture number="0" name="rescript.bracket" />
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="comments" />
+					<include syntax="self" collection="keywords" />
+					<include syntax="self" collection="values" />
+					<include syntax="self" collection="identifiers" />
+					<include syntax="self" collection="syntax" />
+				</subscopes>
+			</scope>
+			<scope name="rescript.arrow-function.inline-expression">
+				<starts-with>
+					<expression>(?=[^;])</expression>
+				</starts-with>
+				<ends-with>
+					<expression>(?=\})|;|$</expression>
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="comments" />
+					<include syntax="self" collection="keywords" />
+					<include syntax="self" collection="values" />
+					<include syntax="self" collection="identifiers" />
+					<include syntax="self" collection="syntax" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Function Blocks -->
+		<collection name="function-blocks">
+			<scope name="rescript.block">
+				<symbol type="block">
+					<context behavior="subtree" fold-type="function" />
+				</symbol>
+				<starts-with>
+					<expression>\{</expression>
+					<capture number="0" name="rescript.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\}</expression>
+					<capture number="0" name="rescript.bracket" />
+				</ends-with>
+				<subscopes>
+					<include syntax="self" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Keywords -->
+		<collection name="keywords">
+			<scope name="rescript.keyword">
+				<strings>
+					<string>await</string>
+					<string>break</string>
+					<string>case</string>
+					<string>catch</string>
+					<string>class</string>
+					<string>const</string>
+					<string>constructor</string>
+					<string>continue</string>
+					<string>debugger</string>
+					<string>default</string>
+					<string>delete</string>
+					<string>do</string>
+					<string>else</string>
+					<string>enum</string>
+					<string>export</string>
+					<string>extends</string>
+					<string>finally</string>
+					<string>for</string>
+					<string>from</string>
+					<string>function</string>
+					<string>if</string>
+					<string>implements</string>
+					<string>import</string>
+					<string>in</string>
+					<string>instanceof</string>
+					<string>interface</string>
+					<string>label</string>
+					<string>let</string>
+					<string>new</string>
+					<string>of</string>
+					<string>package</string>
+					<string>private</string>
+					<string>protected</string>
+					<string>public</string>
+					<string>return</string>
+					<string>static</string>
+					<string>super</string>
+					<string>switch</string>
+					<string>this</string>
+					<string>throw</string>
+					<string>try</string>
+					<string>typeof</string>
+					<string>var</string>
+					<string>void</string>
+					<string>while</string>
+					<string>with</string>
+					<string>yield</string>
+				</strings>
+			</scope>
+		</collection>
+
+		<!-- Values -->
+		<collection name="values">
+			<include syntax="self" collection="strings" />
+			<include syntax="self" collection="functions" />
+			<include syntax="self" collection="blocks" />
+			<scope name="rescript.collection.array">
+				<starts-with>
+					<expression>\[</expression>
+					<capture number="0" name="rescript.bracket" />
+				</starts-with>
+				<ends-with>
+					<expression>\]</expression>
+					<capture number="0" name="rescript.bracket" />
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="comments" />
+					<include syntax="self" collection="values" />
+					<scope name="rescript.comma">
+						<expression>,</expression>
+					</scope>
+				</subscopes>
+			</scope>
+			<scope name="rescript.value.null">
+				<strings>
+					<string>null</string>
+					<string>undefined</string>
+					<string>NaN</string>
+					<string>Infinity</string>
+				</strings>
+			</scope>
+			<scope name="rescript.value.boolean">
+				<strings>
+					<string>true</string>
+					<string>false</string>
+				</strings>
+			</scope>
+			<scope name="rescript.value.number.hex">
+				<expression>\b0x[a-fA-F0-9]+\b</expression>
+			</scope>
+			<scope name="rescript.value.number">
+				<expression>\b\-?(?:\d+(?:\.\d*)?|(?:\.\d+))\b</expression>
+			</scope>
+		</collection>
+
+		<!-- Strings -->
+		<collection name="strings">
+			<scope name="rescript.string.backtick-quoted">
+				<starts-with>
+					<expression>`</expression>
+					<capture number="0" name="rescript.string.backtick-quoted.delimiter" />
+				</starts-with>
+				<ends-with>
+					<expression>`</expression>
+					<capture number="0" name="rescript.string.backtick-quoted.delimiter" />
+				</ends-with>
+				<subscopes>
+					<scope name="rescript.string.backtick-quoted.escape">
+						<expression>\\(?:\\|`|n|r|t|b|f)</expression>
+					</scope>
+					<scope name="rescript.string-template-block" reset-styles="true">
+						<starts-with>
+							<expression>\$\{</expression>
+							<capture number="0" name="rescript.string-template.open" />
+						</starts-with>
+						<ends-with>
+							<expression>\}</expression>
+							<capture number="0" name="rescript.string-template.close" />
+						</ends-with>
+						<subscopes>
+							<include syntax="self" collection="string-literal-inline-expressions" />
+						</subscopes>
+					</scope>
+				</subscopes>
+			</scope>
+			<scope name="rescript.string.double-quoted">
+				<starts-with>
+					<expression>&quot;</expression>
+					<capture number="0" name="rescript.string.double-quoted.delimiter" />
+				</starts-with>
+				<ends-with>
+					<expression>&quot;|(?:(?&lt;!\\)$)</expression>
+					<capture number="0" name="rescript.string.double-quoted.delimiter" />
+				</ends-with>
+				<subscopes>
+					<scope name="rescript.string.double-quoted.escape">
+						<expression>\\(?:\\|&quot;|n|r|t|b|f)</expression>
+					</scope>
+				</subscopes>
+			</scope>
+			<scope name="rescript.string.single-quoted">
+				<starts-with>
+					<expression>&apos;</expression>
+					<capture number="0" name="rescript.string.single-quoted.delimiter" />
+				</starts-with>
+				<ends-with>
+					<expression>&apos;|(?:(?&lt;!\\)$)</expression>
+					<capture number="0" name="rescript.string.single-quoted.delimiter" />
+				</ends-with>
+				<subscopes>
+					<scope name="rescript.string.single-quoted.escape">
+						<expression>\\(?:\\|&apos;|n|r|t|b|f)</expression>
+					</scope>
+				</subscopes>
+			</scope>
+			<scope name="rescript.string.regex">
+				<starts-with>
+					<expression>(?i)(?&lt;=[=(,:\+~!?\[|&amp;]|return|;|=&gt;)\s*/(?![/*+{}?\r\n])</expression>
+				</starts-with>
+				<ends-with>
+					<expression>/([cgimosuxy]+\b)?</expression>
+				</ends-with>
+				<subscopes>
+					<scope name="rescript.string.regex.escape">
+						<expression>\\(?:/|\[)</expression>
+					</scope>
+					<scope name="rescript.string.regex.character-class">
+						<starts-with>
+							<expression>\[</expression>
+						</starts-with>
+						<ends-with>
+							<expression>\]</expression>
+						</ends-with>
+						<subscopes>
+							<scope name="rescript.string.regex.escape">
+								<expression>\\(?:\])</expression>
+							</scope>
+						</subscopes>
+					</scope>
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Expressions for String Literals -->
+		<collection name="string-literal-inline-expressions">
+			<scope name="rescript.string-literal.inline-expression">
+				<starts-with>
+					<expression>(?=[^;])</expression>
+				</starts-with>
+				<ends-with>
+					<expression>(?=\})</expression>
+				</ends-with>
+				<subscopes>
+					<include syntax="self" collection="comments" />
+					<include syntax="self" collection="keywords" />
+					<include syntax="self" collection="values" />
+					<include syntax="self" collection="identifiers" />
+					<include syntax="self" collection="syntax" />
+				</subscopes>
+			</scope>
+		</collection>
+
+		<!-- Identifiers -->
+		<collection name="identifiers">
+			<scope name="rescript.identifier.core.global">
+				<strings prefix="(?&lt;!\.)">
+					<string>arguments</string>
+					<string>crypto</string>
+					<string>document</string>
+					<string>localStorage</string>
+					<string>sessionStorage</string>
+					<string>window</string>
+					<string>Object</string>
+					<string>Symbol</string>
+					<string>Boolean</string>
+					<string>Date</string>
+					<string>Function</string>
+					<string>Math</string>
+					<string>Number</string>
+					<string>String</string>
+					<string>RegExp</string>
+					<string>Array</string>
+					<string>Int8Array</string>
+					<string>Uint8Array</string>
+					<string>Uint8ClampedArray</string>
+					<string>Int16Array</string>
+					<string>Uint16Array</string>
+					<string>Int32Array</string>
+					<string>Uint32Array</string>
+					<string>Float32Array</string>
+					<string>Float64Array</string>
+					<string>Map</string>
+					<string>Set</string>
+					<string>WeakMap</string>
+					<string>WeakSet</string>
+					<string>ArrayBuffer</string>
+					<string>DataView</string>
+					<string>JSON</string>
+					<string>Promise</string>
+					<string>Generator</string>
+					<string>GeneratorFunction</string>
+					<string>Reflect</string>
+					<string>Proxy</string>
+					<string>Intl</string>
+					<string>Error</string>
+					<string>EvalError</string>
+					<string>InternalError</string>
+					<string>RangeError</string>
+					<string>ReferenceError</string>
+					<string>SyntaxError</string>
+					<string>TypeError</string>
+					<string>URIError</string>
+				</strings>
+			</scope>
+			<scope name="rescript.identifier.core.function">
+				<strings prefix="(?&lt;!\.)" suffix="(?=\()">
+					<string>decodeURLComponent</string>
+					<string>decodeURI</string>
+					<string>encodeURIComponent</string>
+					<string>encodeURI</string>
+					<string>escape</string>
+					<string>eval</string>
+					<string>isFinite</string>
+					<string>isNaN</string>
+					<string>parseFloat</string>
+					<string>parseInt</string>
+					<string>unescape</string>
+				</strings>
+			</scope>
+			<scope name="rescript.identifier.property">
+				<expression>(?&lt;=\.)([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)\b(?!\()</expression>
+			</scope>
+			<scope name="rescript.identifier.method">
+				<expression>(?&lt;=\.)([a-zA-Z_\$][A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(?=\()</expression>
+			</scope>
+			<scope name="rescript.identifier.function">
+				<expression>(?&lt;!\.)((?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*)(?=\()</expression>
+			</scope>
+			<scope name="rescript.identifier.constant">
+				<expression>(?&lt;![a-z0-9_])(?:\b[A-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+			</scope>
+			<scope name="rescript.identifier">
+				<expression>(?:\b[a-zA-Z_]|\$)[A-Za-zÀ-ÖØ-öø-ÿŸřŘšŠžŽ0-9_]*</expression>
+			</scope>
+		</collection>
+
+		<!-- Syntax -->
+		<collection name="syntax">
+			<scope name="rescript.bracket">
+				<expression>[\(\[\)\]]</expression>
+			</scope>
+			<scope name="rescript.operator">
+				<expression>(\+|\-|\*|/|%|\+\+|\-\-|\=|\=\=|!\=|\+\=|\-\=|\*\=|/\=|%\=|\&lt;|\&gt;|\&lt;\=|\&gt;=|\=\=\=|!\=\=|&amp;&amp;|\||\|\||!|\^|&amp;|\&lt;\&lt;|\&gt;\&gt;|~)</expression>
+			</scope>
+			<scope name="rescript.comma">
+				<expression>,</expression>
+			</scope>
+			<scope name="rescript.semicolon">
+				<expression>;</expression>
 			</scope>
 		</collection>
 	</collections>
+
 </syntax>
